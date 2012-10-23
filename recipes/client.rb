@@ -7,9 +7,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,13 @@
 
 include_recipe "collectd"
 
-servers = []
-search(:node, 'recipes:"collectd::server"') do |n|
-  servers << n['fqdn']
+unless(node[:recipes].include?('collectd::server'))
+  collectd_server = Discovery.search("collectd_server", :node => node)
+
+  ipaddress = Discovery.ipaddress(:remote_node => collectd_server, :node => node)
+
+  collectd_plugin "network" do
+    options :server=>ipaddress
+  end
 end
 
-if servers.empty?
-  raise "No servers found. Please configure at least one node with collectd::server."
-end
-
-collectd_plugin "network" do
-  options :server=>servers
-end
